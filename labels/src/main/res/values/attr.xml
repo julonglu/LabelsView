@@ -18,5 +18,14 @@
         <attr name="lineMargin" format="dimension" />
         <attr name="wordMargin" format="dimension" />
         <attr name="labelBackground" format="reference|color" />
+        <attr name="lb_cornerRadius" format="dimension"/>
+        <attr name="lb_shadowRadius" format="dimension"/>
+        <attr name="lb_shadowColor" format="color"/>
+        <attr name="lb_dx" format="dimension"/>
+        <attr name="lb_dy" format="dimension"/>
+        <attr name="lb_has_shadow" format="boolean"/>
+        <attr name="fixWidth" format="dimension"/>
+        <attr name="fixHeight" format="dimension"/>
+        
     </declare-styleable>
 </resources>

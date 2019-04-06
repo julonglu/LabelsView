@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?><!--<shape xmlns:android="http://schemas.android.com/apk/res/android">--><!--<stroke--><!--android:width="1dp"--><!--android:color="@color/divider_color" />--><!--<solid android:color="@color/pink_color" />--><!--<corners android:radius="4dp" />--><!--</shape>-->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 标签选中时的背景 -->
-    <item android:state_selected="true">
+    <item android:state_selected="false">
         <shape>
-            <stroke android:width="2dp" android:color="#fb435b" />
-            <corners android:radius="8dp" />
-            <solid android:color="@android:color/white" />
+            <stroke android:width="@dimen/dp_1" android:color="#59403e3e" />
+            <corners android:topLeftRadius="@dimen/dp_14" android:topRightRadius="@dimen/dp_14" android:bottomLeftRadius="@dimen/dp_14" android:bottomRightRadius="@dimen/dp_14" />
         </shape>
     </item>
     <!-- 标签的正常背景 -->
-    <item>
+    <item android:state_selected="true">
         <shape>
-            <stroke android:width="2dp" android:color="#656565" />
-            <corners android:radius="8dp" />
-            <solid android:color="@android:color/white" />
+            <solid android:color="#ffff8423" />
+            <item android:name="android:shadowDx">0</item>
+            <item android:name="android:shadowDy">3</item>
+            <item android:name="android:shadowColor">#59378423</item>
+            <corners android:topLeftRadius="@dimen/dp_14" android:topRightRadius="@dimen/dp_14" android:bottomLeftRadius="@dimen/dp_14" android:bottomRightRadius="@dimen/dp_14" />
         </shape>
     </item>
 </selector>

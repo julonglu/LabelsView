@@ -3,15 +3,24 @@ package com.donkingliang.labels;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -33,6 +42,8 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
     private SelectType mSelectType;
     private int mMaxSelect;
     private int mMaxLines;
+    private int mFixWidth;
+    private int mFixHeight;
 
     //用于保存label数据的key
     private static final int KEY_DATA = R.id.tag_key_data;
@@ -48,6 +59,14 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
 
     private OnLabelClickListener mLabelClickListener;
     private OnLabelSelectChangeListener mLabelSelectChangeListener;
+    private boolean hasShadow;
+    private float mCornerRadius;
+    private float mShadowRadius;
+    private float mDx;
+    private float mDy;
+    private int mShadowUncheckColor;
+    private int mShadowCheckColor;
+
 
     /**
      * Label的选择类型
@@ -105,7 +124,6 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
             TypedArray mTypedArray = context.obtainStyledAttributes(attrs, R.styleable.labels_view);
             int type = mTypedArray.getInt(R.styleable.labels_view_selectType, 1);
             mSelectType = SelectType.get(type);
-
             mMaxSelect = mTypedArray.getInteger(R.styleable.labels_view_maxSelect, 0);
             mMaxLines = mTypedArray.getInteger(R.styleable.labels_view_maxLines, 0);
             mTextColor = mTypedArray.getColorStateList(R.styleable.labels_view_labelTextColor);
@@ -119,8 +137,22 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
                     R.styleable.labels_view_labelTextPaddingRight, 0);
             mTextPaddingBottom = mTypedArray.getDimensionPixelOffset(
                     R.styleable.labels_view_labelTextPaddingBottom, 0);
+
+            mFixWidth = mTypedArray.getDimensionPixelOffset(R.styleable.labels_view_fixWidth, 0);
+            mFixHeight = mTypedArray.getDimensionPixelOffset(R.styleable.labels_view_fixHeight, 0);
+
             mLineMargin = mTypedArray.getDimensionPixelOffset(R.styleable.labels_view_lineMargin, 0);
             mWordMargin = mTypedArray.getDimensionPixelOffset(R.styleable.labels_view_wordMargin, 0);
+
+            hasShadow = mTypedArray.getBoolean(R.styleable.labels_view_lb_has_shadow,true);
+            mCornerRadius = mTypedArray.getDimension(R.styleable.labels_view_lb_cornerRadius, getResources().getDimension(R.dimen.default_corner_radius));
+            mShadowRadius = mTypedArray.getDimension(R.styleable.labels_view_lb_shadowRadius, getResources().getDimension(R.dimen.default_shadow_radius));
+            mDx = mTypedArray.getDimension(R.styleable.labels_view_lb_dx, 0);
+            mDy = mTypedArray.getDimension(R.styleable.labels_view_lb_dy, 0);
+            mShadowUncheckColor = mTypedArray.getColor(R.styleable.labels_view_lb_shadowColor, getResources().getColor(R.color.default_shadow_color));
+            mShadowCheckColor = mTypedArray.getColor(R.styleable.labels_view_lb_shadowColor, getResources().getColor(R.color.check_shadow_color));
+
+
             int labelBgResId = mTypedArray.getResourceId(R.styleable.labels_view_labelBackground, 0);
             if (labelBgResId != 0) {
                 mLabelBg = getResources().getDrawable(labelBgResId);
@@ -134,7 +166,8 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-
+        int xPadding = (int) (mShadowRadius + Math.abs(mDx));
+        int yPadding = (int) (mShadowRadius + Math.abs(mDy));
         int count = getChildCount();
         int maxWidth = MeasureSpec.getSize(widthMeasureSpec) - getPaddingLeft() - getPaddingRight();
 
@@ -153,7 +186,7 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
                 if (mMaxLines > 0 && lineCount > mMaxLines) {
                     break;
                 }
-                contentHeight += mLineMargin;
+                contentHeight += mLineMargin-yPadding*2;
                 contentHeight += maxItemHeight;
                 maxItemHeight = 0;
                 maxLineWidth = Math.max(maxLineWidth, lineWidth);
@@ -162,21 +195,22 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
 
             lineWidth += view.getMeasuredWidth();
             maxItemHeight = Math.max(maxItemHeight, view.getMeasuredHeight());
-
+            TextView lable = (TextView) ((LinearLayout) view).getChildAt(0);
+            setBackgroundCompat((LinearLayout) view,lable.getMeasuredWidth(),lable.getMeasuredHeight(),false);
             if (i != count -1) {
-                if (lineWidth + mWordMargin > maxWidth) {
+                if (lineWidth + mWordMargin - xPadding > maxWidth) {
                     // 换行
                     lineCount++;
                     if (mMaxLines > 0 && lineCount > mMaxLines) {
                         break;
                     }
-                    contentHeight += mLineMargin;
+                    contentHeight += mLineMargin-yPadding*2;
                     contentHeight += maxItemHeight;
                     maxItemHeight = 0;
                     maxLineWidth = Math.max(maxLineWidth, lineWidth);
                     lineWidth = 0;
                 } else {
-                    lineWidth += mWordMargin;
+                    lineWidth += (mWordMargin - xPadding);
                 }
             }
         }
@@ -228,6 +262,8 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
         int x = getPaddingLeft();
         int y = getPaddingTop();
 
+        int xPadding = (int) (mShadowRadius + Math.abs(mDx));
+        int yPadding = (int) (mShadowRadius + Math.abs(mDy));
         int contentWidth = right - left;
         int maxItemHeight = 0;
         int lineCount = 1;
@@ -236,19 +272,19 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
         for (int i = 0; i < count; i++) {
             View view = getChildAt(i);
 
-            if (contentWidth < x + view.getMeasuredWidth() + getPaddingRight()) {
+            if (contentWidth < x + view.getMeasuredWidth() + getPaddingRight() - xPadding) {
                 lineCount++;
                 if (mMaxLines > 0 && lineCount > mMaxLines) {
                     break;
                 }
                 x = getPaddingLeft();
-                y += mLineMargin;
+                y += mLineMargin - yPadding*2;
                 y += maxItemHeight;
                 maxItemHeight = 0;
             }
             view.layout(x, y, x + view.getMeasuredWidth(), y + view.getMeasuredHeight());
             x += view.getMeasuredWidth();
-            x += mWordMargin;
+            x += (mWordMargin - xPadding);
             maxItemHeight = Math.max(maxItemHeight, view.getMeasuredHeight());
         }
     }
@@ -286,6 +322,7 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
         //保存标签背景 (由于背景改用Drawable,所以不能自动保存和恢复)
 //        bundle.putInt(KEY_BG_RES_ID_STATE, mLabelBgResId);
         //保存标签内边距
+        if(mFixWidth<=0 || mFixHeight<=0)
         bundle.putIntArray(KEY_PADDING_STATE, new int[]{mTextPaddingLeft, mTextPaddingTop,
                 mTextPaddingRight, mTextPaddingBottom});
         //保存标签间隔
@@ -428,7 +465,18 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
 
     private <T> void addLabel(T data, int position, LabelTextProvider<T> provider) {
         final TextView label = new TextView(mContext);
-        label.setPadding(mTextPaddingLeft, mTextPaddingTop, mTextPaddingRight, mTextPaddingBottom);
+        final LinearLayout labelshadow = new LinearLayout(mContext);
+        int xPadding = (int) (mShadowRadius + Math.abs(mDx));
+        int yPadding = (int) (mShadowRadius + Math.abs(mDy));
+        labelshadow.setPadding(xPadding, yPadding, xPadding, yPadding);
+
+        if(mFixWidth<=0 || mFixHeight<=0)
+            label.setPadding(mTextPaddingLeft, mTextPaddingTop, mTextPaddingRight, mTextPaddingBottom);
+        else{
+            label.setGravity(Gravity.CENTER);
+            label.setWidth(mFixWidth);
+            label.setHeight(mFixHeight);
+        }
         label.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
         label.setTextColor(mTextColor != null ? mTextColor : ColorStateList.valueOf(0xFF000000));
         //设置给label的背景(Drawable)是一个Drawable对象的拷贝，
@@ -438,7 +486,8 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
         label.setTag(KEY_DATA, data);
         label.setTag(KEY_POSITION, position);
         label.setOnClickListener(this);
-        addView(label);
+        labelshadow.addView(label);
+        addView(labelshadow);
         label.setText(provider.getLabelText(label, position, data));
     }
 
@@ -448,7 +497,7 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
     private void ensureLabelClickable() {
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
-            TextView label = (TextView) getChildAt(i);
+            TextView label = (TextView) ((LinearLayout) getChildAt(i)).getChildAt(0);
             label.setClickable(mLabelClickListener != null || mSelectType != SelectType.NONE);
         }
     }
@@ -461,14 +510,14 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
                 if (label.isSelected()) {
                     if (mSelectType != SelectType.SINGLE_IRREVOCABLY
                             && !mCompulsorys.contains((Integer) label.getTag(KEY_POSITION))) {
-                        setLabelSelect(label, false);
+                        setLabelSelect((LinearLayout) label.getParent(), false);
                     }
                 } else if (mSelectType == SelectType.SINGLE || mSelectType == SelectType.SINGLE_IRREVOCABLY) {
                     innerClearAllSelect();
-                    setLabelSelect(label, true);
+                    setLabelSelect((LinearLayout)label.getParent(), true);
                 } else if (mSelectType == SelectType.MULTI
                         && (mMaxSelect <= 0 || mMaxSelect > mSelectLabels.size())) {
-                    setLabelSelect(label, true);
+                    setLabelSelect((LinearLayout)label.getParent(), true);
                 }
             }
 
@@ -478,8 +527,10 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
         }
     }
 
-    private void setLabelSelect(TextView label, boolean isSelect) {
+    private void setLabelSelect(LinearLayout linearLayout, boolean isSelect) {
+        TextView label = (TextView)linearLayout.getChildAt(0);
         if (label.isSelected() != isSelect) {
+            setBackgroundCompat(linearLayout,label.getMeasuredWidth(),label.getMeasuredHeight(),isSelect);
             label.setSelected(isSelect);
             if (isSelect) {
                 mSelectLabels.add((Integer) label.getTag(KEY_POSITION));
@@ -509,7 +560,7 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
     private void innerClearAllSelect() {
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
-            setLabelSelect((TextView) getChildAt(i), false);
+            setLabelSelect((LinearLayout) getChildAt(i), false);
         }
         mSelectLabels.clear();
     }
@@ -519,7 +570,7 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
         List<Integer> temps = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             if (!mCompulsorys.contains(i)) {
-                setLabelSelect((TextView) getChildAt(i), false);
+                setLabelSelect((LinearLayout) getChildAt(i), false);
                 temps.add(i);
             }
 
@@ -556,9 +607,9 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
                     ? 1 : mMaxSelect;
             for (int p : positions) {
                 if (p < count) {
-                    TextView label = (TextView) getChildAt(p);
+                    TextView label = (TextView) ((LinearLayout) getChildAt(p)).getChildAt(0);
                     if (!selectLabels.contains(label)) {
-                        setLabelSelect(label, true);
+                        setLabelSelect((LinearLayout)label.getParent(), true);
                         selectLabels.add(label);
                     }
                     if (size > 0 && selectLabels.size() == size) {
@@ -568,9 +619,9 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
             }
 
             for (int i = 0; i < count; i++) {
-                TextView label = (TextView) getChildAt(i);
+                TextView label = (TextView) ((LinearLayout) getChildAt(i)).getChildAt(0);
                 if (!selectLabels.contains(label)) {
-                    setLabelSelect(label, false);
+                    setLabelSelect((LinearLayout)label.getParent(), false);
                 }
             }
         }
@@ -929,5 +980,61 @@ public class LabelsView extends ViewGroup implements View.OnClickListener {
          */
         CharSequence getLabelText(TextView label, int position, T data);
     }
+    private void setBackgroundCompat(LinearLayout view,int w, int h,boolean checked) {
+ 
+        if(!hasShadow)
+            return ;
+        Bitmap bitmap = null;
+        if(checked)
+            bitmap = createShadowBitmap(w, h, mCornerRadius, mShadowRadius, mDx, mDy, mShadowCheckColor, Color.TRANSPARENT);
+        else
+            bitmap = createShadowBitmap(w, h, mCornerRadius, mShadowRadius, mDx, mDy, mShadowUncheckColor, Color.TRANSPARENT);
 
+        BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
+        view.setGravity(Gravity.CENTER);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
+            view.setBackgroundDrawable(drawable);
+        } else {
+            view.setBackground(drawable);
+        }
+    }
+    private Bitmap createShadowBitmap(int shadowWidth, int shadowHeight, float cornerRadius, float shadowRadius,
+                                      float dx, float dy, int shadowColor, int fillColor) {
+
+        Bitmap output = Bitmap.createBitmap(shadowWidth, shadowHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        RectF shadowRect = new RectF(
+                shadowRadius,
+                shadowRadius,
+                shadowWidth - shadowRadius,
+                shadowHeight - shadowRadius);
+
+        if (dy > 0) {
+            shadowRect.top += dy;
+            shadowRect.bottom -= dy;
+        } else if (dy < 0) {
+            shadowRect.top += Math.abs(dy);
+            shadowRect.bottom -= Math.abs(dy);
+        }
+
+        if (dx > 0) {
+            shadowRect.left += dx;
+            shadowRect.right -= dx;
+        } else if (dx < 0) {
+            shadowRect.left += Math.abs(dx);
+            shadowRect.right -= Math.abs(dx);
+        }
+        Paint shadowPaint = new Paint();
+        shadowPaint.setAntiAlias(true);
+        shadowPaint.setColor(fillColor);
+        shadowPaint.setStyle(Paint.Style.FILL);
+        if (!isInEditMode()) {
+            shadowPaint.setShadowLayer(shadowRadius, dx, dy, shadowColor);
+        }
+
+        canvas.drawRoundRect(shadowRect, cornerRadius, cornerRadius, shadowPaint);
+
+        return output;
+    }
 }

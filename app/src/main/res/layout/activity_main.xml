@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#cccccc"
+    android:background="#ffffff"
     android:orientation="vertical">
 
     <LinearLayout
@@ -81,21 +82,29 @@
 
 
     <com.donkingliang.labels.LabelsView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:background="#999999"
         android:id="@+id/labels"
-        android:layout_width="match_parent"
+        android:layout_gravity="center"
+        android:layout_width="@dimen/dp_333"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:minHeight="25dp"
-        android:padding="5dp"
+        android:layout_marginTop="@dimen/dp_10"
+        android:minHeight="@dimen/dp_27"
         app:labelBackground="@drawable/label_bg"
         app:labelTextColor="@drawable/label_text_color"
-        app:labelTextPaddingBottom="5dp"
-        app:labelTextPaddingLeft="10dp"
-        app:labelTextPaddingRight="10dp"
-        app:labelTextPaddingTop="5dp"
-        app:labelTextSize="14sp"
-        app:lineMargin="10dp"
+        app:labelTextPaddingBottom="0dp"
+        app:labelTextPaddingLeft="0dp"
+        app:labelTextPaddingRight="0dp"
+        app:labelTextPaddingTop="0dp"
+        app:labelTextSize="@dimen/sp_12"
+        app:lb_dy="@dimen/dp_3"
+        app:lb_shadowRadius="@dimen/dp_5"
+        app:lb_cornerRadius="@dimen/dp_14"
+        app:lb_dx="0dp"
+        app:lb_has_shadow="true"
         app:maxSelect="0"
         app:selectType="SINGLE"
-        app:wordMargin="10dp" />
+        app:fixWidth="@dimen/dp_90"
+        app:fixHeight="@dimen/dp_27"
+        app:lineMargin="@dimen/dp_22"
+        app:wordMargin="@dimen/dp_22" />
 </LinearLayout>

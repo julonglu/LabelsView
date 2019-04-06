@@ -43,17 +43,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         ArrayList<TestBean> testList = new ArrayList<>();
         testList.add(new TestBean("Android",1));
-        testList.add(new TestBean("IOS",2));
-        testList.add(new TestBean("前端",3));
-        testList.add(new TestBean("后台",4));
+        testList.add(new TestBean("下载APP",2));
+        testList.add(new TestBean("前端开发",3));
+        testList.add(new TestBean("后台开发",4));
         testList.add(new TestBean("微信开发",5));
         testList.add(new TestBean("游戏开发",6));
-        testList.add(new TestBean("Java",7));
-        testList.add(new TestBean("JavaScript",8));
-        testList.add(new TestBean("C++",9));
-        testList.add(new TestBean("PHP",10));
-        testList.add(new TestBean("Python",11));
-        testList.add(new TestBean("Swift",12));
+        testList.add(new TestBean("Java开发",7));
         labelsView.setLabels(testList, new LabelsView.LabelTextProvider<TestBean>() {
             @Override
             public CharSequence getLabelText(TextView label, int position, TestBean data) {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="default_shadow_color">#ff000000</color>
+    <color name="check_shadow_color">#f1FF8423</color>
+    <color name="default_fill_color">#ffffff</color>
+
+    <!--publish-->
+    <color name="category_btn_shadow">#f1FF8423</color>
+</resources>
